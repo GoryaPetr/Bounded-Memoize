@@ -1,0 +1,14 @@
+(defn bounded-memoize
+  [f capacity]
+  (let [mem (atom [{} []])]
+    (fn [& args]
+      (if-let [e (find (first @mem) args)]
+
+        (val e)
+        (let [ret (apply f args)]
+          (swap! mem #(let [cache (assoc (first %) args ret)
+                            v (conj (second %) args)]
+                        (if (> (count v) capacity)
+                          [(dissoc cache (first v)) (subvec v 1)]
+                          [cache v])))
+          ret)))))
