@@ -12,3 +12,16 @@
                           [(dissoc cache (first v)) (subvec v 1)]
                           [cache v])))
           ret)))))
+"или такой вариант:"
+(defn bounded-memoize
+  [f capacity]
+  (let [mem (atom [{} (into clojure.lang.PersistentQueue/EMPTY (repeat
+                                                                 capacity :dummy))])]
+    (fn [& args]
+      (deref ((first
+                (swap! mem (fn [[m q :as cache]]
+                             (if (contains? m args)
+                               cache
+                               [(dissoc (assoc m args (delay (apply f args))) (peek q))
+                                (-> q pop (conj args))]))))
+               args)))))
